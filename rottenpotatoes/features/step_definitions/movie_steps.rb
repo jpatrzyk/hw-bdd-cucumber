@@ -2,19 +2,16 @@
 
 Given /the following movies exist/ do |movies_table|
   movies_table.hashes.each do |movie|
-    # each returned element will be a hash whose key is the table header.
-    # you should arrange to add that movie to the database here.
+    Movie.create!(movie);
   end
-  fail "Unimplemented"
 end
 
 # Make sure that one string (regexp) occurs before or after another one
 #   on the same page
 
 Then /I should see "(.*)" before "(.*)"/ do |e1, e2|
-  #  ensure that that e1 occurs before e2.
-  #  page.body is the entire content of the page as a string.
-  fail "Unimplemented"
+  pattern = Regexp.new(".*movies.*" + e1 + ".*" + e2 + ".*" + "</table>", Regexp::MULTILINE)
+  expect(page.body).to match(pattern)
 end
 
 # Make it easier to express checking or unchecking several boxes at once
@@ -22,13 +19,25 @@ end
 #  "When I check the following ratings: G"
 
 When /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
-  # HINT: use String#split to split up the rating_list, then
-  #   iterate over the ratings and reuse the "When I check..." or
-  #   "When I uncheck..." steps in lines 89-95 of web_steps.rb
-  fail "Unimplemented"
+  ratings = rating_list.split(%r{\s*,\s*})
+  ratings.each do |rating|
+    checkbox = "ratings_#{rating}"
+    if(uncheck)
+      uncheck(checkbox)
+    else
+      check(checkbox)
+    end
+  end
+end
+
+Then /I should see only the movies with following ratings: (.*)/ do |rating_list|
+  ratings = rating_list.split(%r{\s*,\s*})
+  ratings_elements = page.all(:css, '#movies td').select.with_index { |_, i| i % 4 == 1 }
+  actual_ratings = ratings_elements.map { |elem| elem.text }.uniq
+  expect(actual_ratings).to match_array(ratings)
 end
 
 Then /I should see all the movies/ do
-  # Make sure that all the movies in the app are visible in the table
-  fail "Unimplemented"
+  rows = page.all(:css, '#movies tr')
+  expect(rows.length).to eq(11)   # 10 movies + 1 for table header
 end
