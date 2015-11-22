@@ -18,15 +18,11 @@ end
 #  "When I uncheck the following ratings: PG, G, R"
 #  "When I check the following ratings: G"
 
-When /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
-  ratings = rating_list.split(%r{\s*,\s*})
+When /I (un)?check the following ratings: (.*)/ do |should_uncheck, rating_list|
+  ratings = rating_list.split(',')
   ratings.each do |rating|
-    checkbox = "ratings_#{rating}"
-    if(uncheck)
-      uncheck(checkbox)
-    else
-      check(checkbox)
-    end
+    checkbox = "ratings[#{rating.strip}]"
+    should_uncheck.to_s.strip.length == 0 ? check(checkbox) : uncheck(checkbox)
   end
 end
 
@@ -38,6 +34,5 @@ Then /I should see only the movies with following ratings: (.*)/ do |rating_list
 end
 
 Then /I should see all the movies/ do
-  rows = page.all(:css, '#movies tr')
-  expect(rows.length).to eq(11)   # 10 movies + 1 for table header
+  page.all('#movies tr').count.should == Movie.count + 1
 end
